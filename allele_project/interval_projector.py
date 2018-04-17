@@ -1,6 +1,6 @@
 import copy
 import subprocess
-import sys
+
 
 class TYPE:
     INS = 1,

@@ -1,7 +1,7 @@
 import argparse
 import sys
 import os
-from interval_projector.interval_projector import IntervalProjector
+from allele_project.interval_projector import IntervalProjector
 
 def normalize_args(args, skip_list=[]):
     """Converts all relative path arguments to absolute ones relatively to the current working directory"""
