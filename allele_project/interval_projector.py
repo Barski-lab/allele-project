@@ -1,6 +1,6 @@
 import copy
 import subprocess
-
+import math
 
 class TYPE:
     INS = 1,
@@ -68,18 +68,24 @@ class IntervalProjector:
         self.ref_interval = RefInterval()
         self.ref_interval_backup = RefInterval()
         self.bed_wc_l = 1
+        self.print_settings()
         self.preliminary_check()
+
 
     def preliminary_check(self):
         """Checks if chromosomes order is identical between BED and REF files. Raise if smth is not correct"""
+        print "\nCheck chromosome order:"
         ref_output = subprocess.check_output("cat {} | cut -f 1 | sort -u".format(self.ref_file), shell=True)
         bed_output = subprocess.check_output("cat {} | cut -f 1 | sort -u".format(self.bed_file), shell=True)
         self.bed_wc_l = subprocess.check_output("cat {} | wc -l".format(self.bed_file), shell=True)
         if ref_output != bed_output:
-            print "Chromosome list or order is different"
-            print "BED\n", bed_output
-            print "REF\n", ref_output
+            print "Chromosome list or order is different!"
             raise Exception
+        ref_chrom_list = ref_output.strip().split("\n")
+        bed_chrom_list = bed_output.strip().split("\n")
+        for bed_item,ref_item in zip(bed_chrom_list, ref_chrom_list):
+            print "  ", bed_item, " - ", ref_item
+        print "Ok"
 
     def reset_data(self):
         self.ref_interval.reset()
@@ -93,12 +99,18 @@ class IntervalProjector:
         self.ref_pointer = file_stream.tell()
         self.ref_interval_backup = copy.deepcopy(self.ref_interval)
 
-    def print_progress(self, cur_line):
-        step = round (float(self.bed_wc_l)/float(5))
+    def print_progress(self, cur_line, percent_step=1):
+        step = math.ceil (float(percent_step)/100.0*float(self.bed_wc_l))
         if cur_line%step == 0:
-            print round(float(cur_line)/float(self.bed_wc_l)*100)
+            print round(float(cur_line)/float(self.bed_wc_l)*100), "%"
+
+    def print_settings(self):
+        print "\nReference map file: ", self.ref_file
+        print "Input bed file:     ", self.bed_file
+        print "Projected bed file: ", self.output_file
 
     def project(self):
+        print "\nStart projecting:"
         with open(self.ref_file, 'r') as ref_stream, open(self.bed_file, 'r') as bed_stream, open(self.output_file,'w') as output_stream:
             for cur_line, bed_line in enumerate(bed_stream, start=1):
                 self.print_progress(cur_line)
